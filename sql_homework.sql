@@ -44,8 +44,8 @@ select payment.staff_id, staff.first_name, staff.last_name, payment.amount, paym
 from staff inner join payment on
 staff.staff_id = payment.staff_id and payment_date like '2005-08%'
 ;
-select f.title as 'Film Title' , count(fa.actor_id) as 'Number of Actors'
-from film.actor fa
+select f.title as 'Film Title', count(fa.actor_id) as 'Number of Actors'
+from film_actor fa
 inner join film f on fa.film_id = f.film_id
 group by f.title
 ;
@@ -56,30 +56,20 @@ where film.film_id = inventory.film_id
 from film
 where title = "Hunchback Impossible"
 ;
-select c.first_name, c.last_name, sum(p.amount) as `Total Paid`
-from customer c
-join payment p 
-on c.customer_id= p.customer_id
-group by c.last_name
+select last_name, first_name, sum(amount) as 'Total Paid'
+from sakila.customer c, sakila.payment p
+where c.customer_id = p.customer_id
+group by last_name, first_name
+order by last_name, first_name
 ;
 select title
-from film where title 
-like 'K%' or title like 'Q%'
-and title in (
-select title 
-from film 
-where language_id = 1
-);
-select first_name, last_name
-from actor
-where actor_id in (
-Select actor_id
-from film_actor
-where film_id in (
-select film_id
-from film
-from title = 'Alone Trip'
-))
+from sakila.film f, sakila.language l
+where f.language_id = l.language_id and l.name like '%ENGLISH%' and (f.title like 'Q%' or f.title like 'K%')
+order by title asc
+;
+select distinct concat(last_name,', ', first_name)
+from sakila.film f, sakila.film_actor fa, sakila.actor a
+where f.film_id = fa.film_id and fa.actor_id = a.actor_id and f.title like 'Alone Trip'
 ;
 select cus.first_name, cus.last_name, cus.email 
 from customer cus
@@ -91,15 +81,10 @@ join country
 on (country.country_id = cty.country_id)
 where country.country= 'Canada'
 ;
-select title, description from film 
-where film_id in
-(
-select film_id from film_category
-where category_id in
-(
-select category_id from category
-where name = "Family"
-));
+select title, description 
+from film f, film_category fc, category c
+where c.category_id = fc.category_id and f.film_id = fc.film_id and c.category_id in (2, 3, 8)
+;
 select f.title, count(rental_id) as 'Times Rented'
 from rental r
 join inventory i
@@ -138,9 +123,9 @@ join rental r
 on (i.inventory_id=r.inventory_id)
 join payment p 
 on (r.rental_id=p.rental_id)
-group by c.name order by Gross  limit 5
+group by c.name order by Gross desc limit 5 
 ;
- create view genre_revenue as
+create view genre_revenue as
 select c.name as 'Genre', sum(p.amount) as 'Gross' 
 from category c
 join film_category fc 
@@ -151,11 +136,11 @@ join rental r
 on (i.inventory_id=r.inventory_id)
 join payment p 
 on (r.rental_id=p.rental_id)
-group by c.name order by Gross  limit 5
+group by c.name order by Gross desc limit 5
 ;
 select * from genre_revenue
 ;
-drop view genre.revenue
+drop view genre_revenue
 ;
 
 
